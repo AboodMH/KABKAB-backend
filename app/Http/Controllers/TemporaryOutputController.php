@@ -45,7 +45,7 @@ class TemporaryOutputController extends Controller
             $validated['user_id'] = auth()->id();
 
             // جلب المنتج من جدول products باستخدام barcode
-            $product = Product::where('barcode', $validated['barcode'])->first();
+            $product = Product::where('barcode', $validated['barcode'])->orWhere('product_no', $validated['barcode'])->first();
 
             if (!$product) {
                 return response()->json([
