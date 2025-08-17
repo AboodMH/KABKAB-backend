@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BarcodePrintController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\CompanyPaymentController;
 use App\Http\Controllers\CreateInputInvoiceController;
@@ -241,6 +242,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // المصاريف
     Route::apiResource('/expense', ExpenseController::class);
+});
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    
+    Route::get('/barcode/print/{invoiceId}', [BarcodePrintController::class, 'printBarcodeLabelDependInvoiceId']);
 });
 
 
