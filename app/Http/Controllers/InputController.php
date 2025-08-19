@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Input;
+use App\Models\Product;
+use DB;
 use Illuminate\Http\Request;
 use Validator;
 
@@ -33,18 +35,18 @@ class InputController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        DB::beginTransaction();
+
         try {
             $validator = Validator::make($request->all(), [
                 'invoice_no' => 'nullable|numeric|exists:inputs_invoice,invoice_no',
                 'product_id' => 'nullable|numeric|exists:products,id',
-                'quantity' => 'nullable|integer|min:1',
-            ],[
-                'invoice_no.numeric' => 'رقم الفاتورة يجب أن يكون رقم',
-                'invoice_no.exists' => 'رقم الفاتورة غير موجود',
-                'product_id.numeric' => 'اسم المنتج يجب أن يكون رقم',
-                'product_id.exists' => 'اسم المنتج غير موجود',
-                'quantity.integer' => 'الكمية يجب أن تكون رقم',
-                'quantity.min' => 'الكمية يجب أن تكون أكبر من 1',
+                'barcode' => 'nullable|string',
+                'product_no' => 'nullable|string',
+                'product_name' => 'nullable|string',
+                'buy_price' => 'nullable|numeric|min:0',
+                'sell_price' => 'nullable|numeric|min:0',
+                'quantity' => 'nullable|integer|min:0',
             ]);
 
             if ($validator->fails()) {
@@ -59,10 +61,16 @@ class InputController extends Controller
                 'product_id' => $validatedData['product_id'] ?? $input->product_id,
                 'quantity' => $validatedData['quantity'] ?? $input->quantity,
             ]);
+
+            $product = Product::findOrFail($input->product_id);
             
+            
+            DB::commit();
+
             return response()->json(['message' => 'تم تعديل البيانات بنجاح'],);
 
         }catch(\Exception $e) {
+            DB::rollBack();
             return response()->json(['error' => 'حدث خطأ أثناء تعديل البيانات']);
         }
     }

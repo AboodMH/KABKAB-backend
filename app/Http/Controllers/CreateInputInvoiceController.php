@@ -263,7 +263,7 @@ class CreateInputInvoiceController extends Controller
     public function printBarcodeLabel($data)
     {
         try {
-            $pythonServerUrl = 'http://127.0.0.1:5005/print-label';
+            $pythonServerUrl = 'http://192.168.0.101:5005/print-label';
 
             $response = Http::post($pythonServerUrl, $data);
 

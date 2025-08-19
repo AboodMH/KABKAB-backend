@@ -66,22 +66,36 @@ class ProductController extends Controller
     {
         $query = $request->input('search');
 
+        // استعلام المنتجات مع شرط أن الحالة = 1
         $productsQuery = Product::where('state', 1);
 
         if (!empty($query)) {
             $query = strtoupper($query);
-            $productsQuery->whereRaw('UPPER(product_no) LIKE ?', ['%' . $query . '%']); // البحث في بداية النص فقط
+            $productsQuery->whereRaw('UPPER(product_no) LIKE ?', ['%' . $query . '%']);
         }
 
+        // جلب النتائج مع التقسيم على صفحات
         $products = $productsQuery->paginate(20);
+
+        // تحقق إذا الصفحة الحالية هي الأخيرة
+        $isFinalPage = $products->currentPage() === $products->lastPage();
 
         $data = [
             'products' => $products->items(),
             'pages_number' => $products->lastPage(),
+            'is_final_page' => $isFinalPage,
         ];
+
+        // إذا كانت آخر صفحة نحسب المجموع ونضيفه
+        if ($isFinalPage) {
+            $totalsQuery = clone $productsQuery;
+            $data['total_quantity'] = $totalsQuery->sum('quantity');
+            $data['total_buy_price'] = $totalsQuery->sum('buy_price');
+        }
 
         return response()->json($data, 200);
     }
+
 
 
     // fetch the information of product depend on product number
