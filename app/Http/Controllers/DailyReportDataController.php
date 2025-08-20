@@ -16,11 +16,6 @@ class DailyReportDataController extends Controller
     {
         $userId = auth()->id();
 
-        $invoices = OutputInvoice::
-            where('user_id', $userId)
-            ->where('is_deported', 0)
-            ->get();
-
         $payments_cash = Payment::
             where('user_id', $userId)
             ->where('is_deported', 0)
@@ -32,7 +27,7 @@ class DailyReportDataController extends Controller
             where('user_id', $userId)
             ->where('is_deported', 0)
             ->where('type', 'inside')
-            ->where('method', '!=', 'cash')
+            ->where('method', '!=', value: 'cash')
             ->get();
 
         $outside_payments = Payment::
@@ -51,15 +46,6 @@ class DailyReportDataController extends Controller
             where('user_id', $userId)
             ->where('is_deported', 0)
             ->get();
-
-        $total_invoices_value = $invoices->sum( function ($p) {
-            $discount = $p->discount;
-            if ($p->discount_type != 'fixed') {
-                $discount = $p->discount * $p->value;
-            }
-
-            return $p->value - $discount;
-        });
 
         $data = [
             'cash' => $payments_cash->sum(fn($p) => $p->amount),

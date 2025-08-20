@@ -197,11 +197,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // جلب التقارير اليومية حسب الشهر
     Route::get('/daily-report/by-month/{month}', [DailyReportController::class, 'getReportsByMonth']);
 
-    // التقارير اليومية
-    Route::apiResource('/daily-report', DailyReportController::class);
-
     // جلب بيانات التقرير اليوميه للتأكد قبل اغلاق الكاش
     Route::get('/daily-report/data', [DailyReportDataController::class, 'getReportData']);
+
+    // التقارير اليومية
+    Route::apiResource('/daily-report', DailyReportController::class);
 
     // ترحيل جميع البيانات لتوليد التقرير اليومي
     Route::put('/daily-report/deportation/{id}', [DailyReportDataController::class, 'deportation']);
