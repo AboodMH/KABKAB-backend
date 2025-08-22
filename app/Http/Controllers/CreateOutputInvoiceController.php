@@ -225,9 +225,11 @@ class CreateOutputInvoiceController extends Controller
             }
 
             // خصم الكمية وتحديث الحالة إذا لزم
-            $product->quantity -= $productData['quantity'];
-            if ($product->quantity == 0) {
-                $product->state = 'out_of_stock';
+            if ($product->product_no !== 'NON-000') {
+                $product->quantity -= $productData['quantity'];
+                if ($product->quantity == 0) {
+                    $product->state = 'out_of_stock';
+                }
             }
 
             $product->save();
@@ -374,7 +376,7 @@ class CreateOutputInvoiceController extends Controller
                 'payments' => $payments,
             ];
 
-            $pythonServerUrl = 'http://127.0.0.1:9000/print';
+            $pythonServerUrl = 'http://192.168.0.101:9000/print';
 
             $response = Http::post($pythonServerUrl, $dataToPrint);
 

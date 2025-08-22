@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\InputInvoice;
+use App\Models\Product;
 use DB;
 use Exception;
 use Http;
-use Illuminate\Http\Request;
-use Symfony\Component\Console\Input\Input;
+
 
 class BarcodePrintController extends Controller
 {
@@ -37,6 +36,30 @@ class BarcodePrintController extends Controller
 
                 $response = Http::post($pythonServerUrl, $data);
             }
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'خطأ في الاتصال بسيرفر الطباعة',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function printBarcodeLabelDependProduct($productId, $quantity)
+    {
+        try {
+            $product = Product::where('id', $productId)->first();
+
+            $pythonServerUrl = 'http://127.0.0.1:5005/print-label';
+
+             $data = [
+                'price'   => $product->sell_price,
+                'product_name' => $product->product_no,
+                'barcode'      => $product->barcode,
+                'quantity'     => $quantity,
+            ];
+
+            Http::post($pythonServerUrl, $data);
 
         } catch (Exception $e) {
             return response()->json([

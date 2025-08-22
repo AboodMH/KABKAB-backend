@@ -247,7 +247,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     
-    Route::get('/barcode/print/{invoiceId}', [BarcodePrintController::class, 'printBarcodeLabelDependInvoiceId']);
+    Route::get('/barcode/print/invoice/{invoiceId}', [BarcodePrintController::class, 'printBarcodeLabelDependInvoiceId']);
+
+    Route::get('/barcode/print/product/{productId}/{quantity}', [BarcodePrintController::class, 'printBarcodeLabelDependProduct']);
 });
 
 
