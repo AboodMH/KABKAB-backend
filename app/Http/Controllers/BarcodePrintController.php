@@ -45,10 +45,10 @@ class BarcodePrintController extends Controller
         }
     }
 
-    public function printBarcodeLabelDependProduct($productId, $quantity)
+    public function printBarcodeLabelDependProductNo($productNo, $quantity)
     {
         try {
-            $product = Product::where('id', $productId)->first();
+            $product = Product::where('product_no', $productNo)->first();
 
             $pythonServerUrl = 'http://127.0.0.1:5005/print-label';
 
