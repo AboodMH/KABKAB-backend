@@ -342,7 +342,7 @@ class CreateOutputInvoiceController extends Controller
                 $items[] = [
                     'product' => "{$product['product_no']} {$product['product_name']}",
                     'qty' => $output ? $output->quantity : 1,
-                    'price' => $product['sell_price']
+                    'price' => $output['price']
                 ];
             }
 

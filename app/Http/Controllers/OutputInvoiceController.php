@@ -135,14 +135,17 @@ class OutputInvoiceController extends Controller
     // fetch data of invoice depend on invoice number
     public function getProductOfInvoice($invoiceId)
     {
-        $products = Output::
-            join('products', 'outputs.product_id', '=', 'products.id')
+        $products = Output::join('products', 'outputs.product_id', '=', 'products.id')
             ->where('outputs.output_invoice_id', $invoiceId)
             ->select(
                 'products.barcode',
                 'products.product_no',
                 'products.product_name',
-                'products.sell_price',
+                DB::raw("CASE 
+                            WHEN products.product_no = 'NON-000' 
+                            THEN outputs.sell_price 
+                            ELSE products.sell_price 
+                        END as sell_price"),
                 'products.image',
                 'outputs.quantity'
             )
