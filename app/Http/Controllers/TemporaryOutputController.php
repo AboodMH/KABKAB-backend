@@ -94,14 +94,12 @@ class TemporaryOutputController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'product_id' => 'nullable|integer|exists:products,id',
-                'product_name' => 'nullable|string',
                 'price' => 'nullable|numeric|min:0',
                 'quantity' => 'nullable|integer|min:1',
                 'user_id' => 'nullable|integer|exists:users,id',
             ],
             [
                 'product_id.exists' => 'المنتج غير موجود',
-                'product_name.string' => 'يجب أن يكون اسم المنتج نصًا',
                 'price.decimal' => 'يجب ان يكون السعر رقما',
                 'quantity.integer' => 'يجب أن تكون الكمية عدد صحيح',
                 'quantity.min' => 'يجب أن تكون الكمية أكبر من 0',
@@ -130,7 +128,6 @@ class TemporaryOutputController extends Controller
 
             $product->update([
                 'product_id' => $validatedData['product_id'] ?? $product->product_id,
-                'product_name' => $validatedData['product_name'] ?? $p->product_name,
                 'price' => $validatedData['price'] ?? $product->price,
                 'quantity' => $validatedData['quantity'] ?? $product->quantity,
                 'user_id' => $validatedData['user_id'] ?? $product->user_id,
