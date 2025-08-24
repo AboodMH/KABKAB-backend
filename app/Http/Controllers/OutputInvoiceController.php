@@ -143,7 +143,7 @@ class OutputInvoiceController extends Controller
                 'products.product_name',
                 DB::raw("CASE 
                             WHEN products.product_no = 'NON-000' 
-                            THEN outputs.sell_price 
+                            THEN outputs.price 
                             ELSE products.sell_price 
                         END as sell_price"),
                 'products.image',
