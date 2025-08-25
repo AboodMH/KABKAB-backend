@@ -11,7 +11,9 @@ use App\Models\Payment;
 use App\Models\Product;
 use DB;
 use Exception;
+use Http;
 use Illuminate\Http\Request;
+use Validator;
 
 class ExchangeAndReturnOutputController extends Controller
 {
@@ -22,6 +24,7 @@ class ExchangeAndReturnOutputController extends Controller
 
             'returned_products' => 'required|array',
             'returned_products.*.product_number' => 'required|string',
+            'returned_products.*.price' => 'required|numeric|min:0',
             'returned_products.*.quantity' => 'required|integer|min:1',
 
             'new_products' => 'required|array',
@@ -146,6 +149,8 @@ class ExchangeAndReturnOutputController extends Controller
             $diff = abs(round($finalValue - $inputTotalValue, 2));
             $totalAmountPaid = array_sum(array_column($validated['payments'], 'amount_paid'));
 
+            $printPayment = [];
+
             foreach ($validated['payments'] as $pay) {
                 $change = 0;
                 $isCash = $pay['method'] == 'cash';
@@ -164,7 +169,32 @@ class ExchangeAndReturnOutputController extends Controller
                     'invoice_type' => 'output',
                     'note' => 'دفع عملية استبدال'
                 ]);
+                $printPayment[] = [
+                    'payment_method' => $pay['method'],
+                    'amount_paid' => $pay['amount_paid'],
+                    'payment_note' => 'دفع عملية استبدال',
+
+                ];
             }
+
+            // === 5. طباعة الفاتورة ===
+            
+            $printData = [
+                'invoice_no' => $outputInvoice->invoice_no,
+                'payments' => $printPayment,
+                'returnedProducts' => $validated['returned_products'],
+                'newProducts' => $validated['new_products'],
+            ];
+
+            $printInvoice = $this->printInvoice($printData);
+                if ($printInvoice->getStatusCode() !== 201) {
+                    DB::rollBack();
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'فشل في طباعة الفاتورة',
+                        'error' => $printInvoice->getData(),
+                    ], $printInvoice->getStatusCode());
+                }
 
             DB::commit();
 
@@ -179,6 +209,127 @@ class ExchangeAndReturnOutputController extends Controller
             return response()->json([
                 'message' => 'فشلت عملية الاستبدال.',
                 'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function printInvoice($data)
+    {
+        // تحقق من البيانات الواردة
+        $validator = Validator::make([
+            "invoice_no" => $data['invoice_no'],
+            "payments" => $data['payments'],
+            "returned_products" => $data['returnedProducts'],
+            "new_products" => $data['newProducts'],
+        ], [
+            'invoice_no' => 'required|numeric|exists:output_invoices,invoice_no',
+            'payments' => 'required|array',
+            'payments.*.payment_method' => 'required|in:cash,card,click',
+            'payments.*.amount_paid' => 'required|numeric|min:0',
+            'payments.*.payment_note' => 'nullable|string',
+            'returned_products' => 'required|array',
+            'returned_products.*.product_number' => 'required|string',
+            'returned_products.*.price' => 'required|numeric|min:0',
+            'returned_products.*.quantity' => 'required|integer|min:1',
+            'new_products' => 'required|array',
+            'new_products.*.product_number' => 'required|string',
+            'new_products.*.price' => 'required|numeric|min:0',
+            'new_products.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'رقم الفاتورة مطلوب ويجب أن يكون عددًا صحيحًا',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $validatedData = $validator->validated();
+
+        try {
+            // هنا عدّل ليجلب بيانات الفاتورة من قاعدة البيانات أو مصدر البيانات
+            // المثال التالي بيانات ثابتة للتوضيح
+
+            $invoiceNo = $validatedData['invoice_no'];
+
+
+            $cashier = auth()->user()->name;
+
+
+            // بيانات الفاتورة
+            $date_time = now()->format('Y-m-d H:i');
+
+            $returnedProducts = [];
+
+            foreach ($validatedData['returned_products'] as $product) {
+
+                $p = Product::where('product_no', $product['product_number'])->first();
+
+                $returnedProducts[] = [
+                    'product' => "{$p['product_no']} {$p['product_name']}",
+                    'qty' => $product['quantity'],
+                    'price' => $product['price']
+                ];
+            }
+
+            $newProducts = [];
+
+            foreach ($validatedData['new_products'] as $product) {
+
+                $p = Product::where('product_no', $product['product_number'])->first();
+
+                $newProducts[] = [
+                    'product' => "{$p['product_no']} {$p['product_name']}",
+                    'qty' => $product['quantity'],
+                    'price' => $product['price']
+                ];
+            }
+
+
+            // المدفوعات المرتبطة بالفاتورة
+            $payments = $validatedData['payments'];
+
+            // تأكد أن هناك مدفوعات صالحة (مثلاً المجموع أكبر من صفر)
+            $totalPaid = array_reduce($payments, function ($sum, $p) {
+                return $sum + ($p['amount_paid'] ?? 0);
+            }, 0);
+
+            if ($totalPaid < 0) {
+                return response()->json([
+                    'message' => 'يجب أن يكون هناك مبلغ مدفوع صالح للطباعة'
+                ], 422);
+            }
+
+            // تأكد أن المنتجات ليست فارغة
+            if (empty($newProducts || empty($returnedProducts))) {
+                return response()->json([
+                    'message' => 'لا توجد منتجات للطباعة في هذه الفاتورة'
+                ], 422);
+            }
+
+            $dataToPrint = [
+                "invoice_type" => "exchange",
+                'invoice_no' => $invoiceNo,
+                'cashier' => $cashier,
+                'date_time' => $date_time,
+                'returned_products' => $returnedProducts,
+                'new_products' => $newProducts,
+                'payments' => $payments,
+            ];
+
+            $pythonServerUrl = 'http://192.168.0.102:9000/print';
+
+            $response = Http::post($pythonServerUrl, $dataToPrint);
+
+            if ($response->successful()) {
+                return response()->json(['message' => 'تم إرسال الفاتورة للطباعة'], 201);
+            } else {
+                return response()->json(['message' => 'فشل في إرسال الفاتورة للطباعة'], 500);
+            }
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'خطأ في الاتصال بسيرفر الطباعة',
+                'error' => $e->getMessage()
             ], 500);
         }
     }

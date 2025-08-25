@@ -369,6 +369,7 @@ class CreateOutputInvoiceController extends Controller
             }
 
             $dataToPrint = [
+                "invoice_type" => "sell",
                 'invoice_no' => $invoiceNo,
                 'cashier' => $cashier,
                 'date_time' => $date_time,
@@ -376,7 +377,7 @@ class CreateOutputInvoiceController extends Controller
                 'payments' => $payments,
             ];
 
-            $pythonServerUrl = 'http://192.168.0.101:9000/print';
+            $pythonServerUrl = 'http://192.168.0.102:9000/print';
 
             $response = Http::post($pythonServerUrl, $dataToPrint);
 
