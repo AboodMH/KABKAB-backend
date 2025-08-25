@@ -77,7 +77,7 @@ class ExchangeAndReturnOutputController extends Controller
                 $product->save();
 
                 $inputTotalQty += $item['quantity'];
-                $inputTotalValue += $product->sell_price * $item['quantity'];
+                $inputTotalValue += $item['price'] * $item['quantity'];
             }
 
             $inputInvoice->quantity = $inputTotalQty;
@@ -165,9 +165,10 @@ class ExchangeAndReturnOutputController extends Controller
                     'amount' => $amount,
                     'amount_paid' => $pay['amount_paid'],
                     'change' => $change,
-                    'invoice_no' => $outputInvoice->id,
-                    'invoice_type' => 'output',
-                    'note' => 'دفع عملية استبدال'
+                    'output_invoice_id' => $outputInvoice->id,
+                    'input_invoice_id' => $inputInvoice->id,
+                    'note' => 'دفع عملية استبدال',
+                    'user_id' => auth()->id()
                 ]);
                 $printPayment[] = [
                     'payment_method' => $pay['method'],
@@ -317,7 +318,7 @@ class ExchangeAndReturnOutputController extends Controller
                 'payments' => $payments,
             ];
 
-            $pythonServerUrl = 'http://192.168.0.102:9000/print';
+            $pythonServerUrl = 'http://127.0.0.1:9000/print';
 
             $response = Http::post($pythonServerUrl, $dataToPrint);
 

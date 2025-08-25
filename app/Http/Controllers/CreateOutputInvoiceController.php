@@ -377,7 +377,7 @@ class CreateOutputInvoiceController extends Controller
                 'payments' => $payments,
             ];
 
-            $pythonServerUrl = 'http://192.168.0.102:9000/print';
+            $pythonServerUrl = 'http://127.0.0.1:9000/print';
 
             $response = Http::post($pythonServerUrl, $dataToPrint);
 
