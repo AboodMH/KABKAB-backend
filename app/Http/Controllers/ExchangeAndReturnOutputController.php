@@ -405,9 +405,9 @@ class ExchangeAndReturnOutputController extends Controller
                 'amount' => $item['price'],
                 'amount_paid' => 0,
                 'change' => 0,
-                'invoice_no' => $inputInvoice->id,
-                'invoice_type' => 'input',
-                'note' => 'استرداد من عملية إرجاع'
+                'input_invoice_id' => $inputInvoice->id,
+                'note' => 'استرداد من عملية إرجاع',
+                'user_id' => auth()->id()
             ]);
 
             DB::commit();
